@@ -8,5 +8,5 @@ autom4te.cache/
 # make artifacts
 aarchup
 aarchup.1.gz
-
-
+# IDE related
+.vscode/
