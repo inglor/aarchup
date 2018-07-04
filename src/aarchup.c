@@ -179,7 +179,7 @@ void read_update_pipe(FILE *pac_out, int *update_count, int max_number_out, int 
         if(aur && first){
             llen = strlen(AUR_HEADER);
             *output_string = (char *)realloc(*output_string,strlen(*output_string)+1+llen);
-            strncat(*output_string, AUR_HEADER, llen);
+            strncat(*output_string, AUR_HEADER, strlen(*output_string));
             first = FALSE;
         }
         (*update_count)++;
@@ -206,8 +206,8 @@ void read_update_pipe(FILE *pac_out, int *update_count, int max_number_out, int 
         /* We allocate that much more memory+2 bytes for the "- "+1 byte as delimiter. */
         *output_string = (char *)realloc(*output_string,strlen(*output_string)+1+llen+2);
         /* We add the line to the output string. */
-        strncat(*output_string,"- ",2);
-        strncat(*output_string,line,llen);
+        strncat(*output_string,"- ",strlen(*output_string));
+        strncat(*output_string,line,strlen(*output_string));
     }
 }
 
