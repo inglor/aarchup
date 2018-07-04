@@ -26,7 +26,7 @@ aarchup-bin: aarchup.c
 	$(CC) $(CFLAGS) -DVERSION=\"$(VERSION)\" `pkg-config --cflags --libs gtk+-2.0` aarchup.c -o aarchup $(LIBS)
 
 aarchup-man: aarchup.1
-	gzip aarchup.1
+	gzip -kf aarchup.1
 
 install:
 	install -Dm755 aarchup $(DESTDIR)/usr/bin/aarchup
