@@ -265,11 +265,11 @@ int main(int argc, char **argv)
 
     /* Default timeout-value is: 60 min (int timeout = 3600*1000;)
        After this time the desktop notification disappears */
-    int timeout = 3600*1000;
+    unsigned int timeout = 3600*1000;
     /* Restricts the number of packages which should be included in the desktop notification.*/
-    int max_number_out = 30;
-    int loop_time = 3600;
-    int manual_timeout = 0;
+    unsigned int max_number_out = 30;
+    unsigned int loop_time = 3600;
+    unsigned int manual_timeout = 0;
     static int help_flag = 0;
     static int version_flag = 0;
     static int aur = 0;
