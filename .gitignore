@@ -1,12 +1,37 @@
-# autoconf artifacts
-configure
-# configure artifacts
-Makefile
-config.log
-config.status
-autom4te.cache/
-# make artifacts
-aarchup
-aarchup.1.gz
-# IDE related
-.vscode/
+### JetBrains template
+.idea
+out/
+
+# CMake
+cmake-build-debug/
+cmake-build-release/
+
+### Autotools template
+# http://www.gnu.org/software/automake
+/ar-lib
+/mdate-sh
+/py-compile
+/test-driver
+/ylwrap
+/autom4te.cache
+/autoscan.log
+/autoscan-*.log
+/aclocal.m4
+/compile
+/config.guess
+/config.h.in
+/config.sub
+/configure
+/configure.scan
+/depcomp
+/install-sh
+/missing
+/stamp-h1
+autom4te.cache
+
+### VisualStudioCode template
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
