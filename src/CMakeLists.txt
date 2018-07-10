@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
-set(CMAKE_C_STANDARD 99)
-project(aarchup C)
+set (CMAKE_CXX_STANDARD 11)
+project(aarchup)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -10,5 +10,5 @@ find_package(LibNotify REQUIRED)
 include_directories("${GLIB_INCLUDE_DIRS}")
 include_directories("${LIBNOTIFY_INCLUDE_DIRS}")
 
-add_executable(aarchup aarchup.c)
+add_executable(aarchup aarchup.cpp CliWrapper.cpp CliWrapper.h)
 target_link_libraries(aarchup ${GLIB_LIBRARIES} ${LIBNOTIFY_LIBRARIES})
