@@ -7,7 +7,9 @@
 #include <time.h>
 #include <getopt.h>
 #include <stdbool.h>
-#include "CliWrapper.h"
+#include <memory>
+#include <iostream>
+#include "CliWrapper.hpp"
 
 #define AUR_HEADER "AUR updates:\n"
 #define STREQ !strcmp
@@ -66,28 +68,33 @@ int main(int argc, char **argv) {
     unsigned int manual_timeout = 0;
     const char *command = "/usr/bin/checkupdates";
     gchar *icon = NULL;
-    NotifyUrgency urgency;
-    bool will_loop = FALSE, debug = FALSE;
+    NotifyUrgency urgency = NOTIFY_URGENCY_NORMAL;
+    bool will_loop = FALSE;
+    bool debug = FALSE;
+    static int help_flag = 0;
+    static int version_flag = 0;
+    static int aur = 0;
+    static int ignore_pkg_flag = 1;
 
     /* Parse commandline options */
     int c;
     while (true) {
         /* Long opts */
         static struct option long_options[] = {
-                {"command",       required_argument, 0, 'c'},
-                {"icon",          required_argument, 0, 'p'},
-                {"maxentries",    required_argument, 0, 'm'},
-                {"timeout",       required_argument, 0, 't'},
-                {"uid",           required_argument, 0, 'i'},
-                {"urgency",       required_argument, 0, 'u'},
-                {"loop-time",     required_argument, 0, 'l'},
-                {"help",          no_argument,       0, 1},
-                {"version",       no_argument,       0, 1},
-                {"aur",           no_argument,       0, 1},
-                {"ftimeout",      required_argument, 0, 'f'},
-                {"debug",         no_argument,       0, 'd'},
-                {"pkg-no-ignore", no_argument,       0, 0},
-                {0, 0,                               0, 0},
+                {"command",       required_argument, nullptr,          'c'},
+                {"icon",          required_argument, nullptr,          'p'},
+                {"maxentries",    required_argument, nullptr,          'm'},
+                {"timeout",       required_argument, nullptr,          't'},
+                {"uid",           required_argument, nullptr,          'i'},
+                {"urgency",       required_argument, nullptr,          'u'},
+                {"loop-time",     required_argument, nullptr,          'l'},
+                {"help",          no_argument,       &help_flag,       1},
+                {"version",       no_argument,       &version_flag,    1},
+                {"aur",           no_argument,       &aur,             1},
+                {"ftimeout",      required_argument, nullptr,          'f'},
+                {"debug",         no_argument,       nullptr,          'd'},
+                {"pkg-no-ignore", no_argument,       &ignore_pkg_flag, 0},
+                {nullptr, 0,                         nullptr,          0},
         };
         int option_index = 0;
         c = getopt_long(argc, argv, "c:p:m:t:i:u:l:df:", long_options, &option_index);
@@ -177,14 +184,27 @@ int main(int argc, char **argv) {
         }
     }
 
-    auto *cliWrapper = new CliWrapper("/bin/checkupdates");
-    notify_init("Sample");
-    NotifyNotification *n = notify_notification_new("New updates for Arch Linux available!",
-                                                    cliWrapper->execute().c_str(), nullptr);
-    notify_notification_set_timeout(n, 5000);
-    if (!notify_notification_show(n, nullptr)) {
-        std::cerr << "show has failed" << std::endl;
-        return -1;
+    std::unique_ptr<CliWrapper> checkUpdatesCmd = std::make_unique<CliWrapper>("/bin/checkupdates");
+    const std::string &checkUpdateOut = checkUpdatesCmd->execute();
+    std::string aurHelperOut;
+    if (aur) {
+        std::cout << "Checking AUR" << std::endl;
+        std::unique_ptr<CliWrapper> aurHelperCmd = std::make_unique<CliWrapper>("/bin/auracle sync");
+        aurHelperOut = aurHelperCmd->execute();
     }
+    if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
+        notify_init("Aarchup");
+        NotifyNotification *n = notify_notification_new("New updates for Arch Linux available!",
+                                                        checkUpdateOut.c_str(), nullptr);
+        notify_notification_set_timeout(n, 5000);
+        notify_notification_set_urgency(n, urgency);
+        if (!notify_notification_show(n, nullptr)) {
+            std::cerr << "Failed to show notification" << std::endl;
+            return -1;
+        }
+    } else {
+        std::cout << "No updates found" << std::endl;
+    }
+
     return 0;
 }
