@@ -4,7 +4,8 @@
 #include <stdexcept>
 #include <string>
 #include <array>
-#include "CliWrapper.h"
+#include <sstream>
+#include "CliWrapper.hpp"
 
 
 CliWrapper::CliWrapper(const char *cliCommand) {
@@ -18,7 +19,9 @@ std::string CliWrapper::execute() {
     std::string result;
     std::shared_ptr<FILE> pipe(popen(CliWrapper::_cliCommand, "r"), pclose);
     if (!pipe) {
-        throw std::runtime_error("popen() failed!");
+        std::stringstream ss;
+        ss << "Failed to execute command " << _cliCommand;
+        throw std::runtime_error(ss.str());
     }
     while (!feof(pipe.get())) {
         if (fgets(buffer.data(), 128, pipe.get()) != nullptr) {
