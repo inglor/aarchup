@@ -10,13 +10,16 @@
 #include <memory>
 #include <iostream>
 #include "CliWrapper.hpp"
+#include <glib.h>
+#include <string.h>
 
+#define G_LOG_DOMAIN ((gchar*) 0)
 #define AUR_HEADER "AUR updates:\n"
 #define STREQ !strcmp
 #define VERSION_NUMBER "2.0.0"
 
 /* Prints the help. */
-int PrintHelp(char *name) {
+int PrintHelp() {
     std::cout << "Usage: aarchup [options]\n\n"
                  "Options:\n"
                  "          --command|-c [value]        Set the command which gives out the list of updates.\n"
@@ -60,20 +63,22 @@ int print_version() {
 
 
 int main(int argc, char **argv) {
-    unsigned int timeout = 3600 * 1000;
-    /* Restricts the number of packages which should be included in the desktop notification.*/
-    int max_number_out = 30;
-    unsigned int loop_time = 3600;
-    unsigned int manual_timeout = 0;
-    const char *command = "/usr/bin/checkupdates";
-    gchar *icon = NULL;
     NotifyUrgency urgency = NOTIFY_URGENCY_NORMAL;
+    const char *command = "/usr/bin/checkupdates";
+    const char *aurCommand = "/usr/bin/auracle sync";
+
+    int timeout = 3600 * 1000;
+    int max_number_out = 30;
+    int loop_time = 3600;
+    int manual_timeout = 0;
+    gchar *icon = nullptr;
     bool will_loop = FALSE;
-    bool debug = FALSE;
     static int help_flag = 0;
     static int version_flag = 0;
     static int aur = 0;
     static int ignore_pkg_flag = 1;
+
+    g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, g_log_default_handler, nullptr);
 
     /* Parse commandline options */
     const char *const short_opts = "c:p:m:t:i:u:l:df:";
@@ -102,50 +107,57 @@ int main(int argc, char **argv) {
         }
         /* Short opts */
         switch (opt) {
+            case 'd':
+                g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, g_log_default_handler, nullptr);
+                putenv(const_cast<char *>("G_MESSAGES_DEBUG=all"));
+                break;
             case 0:
                 if (long_opts[option_index].flag) {
                     break;
                 }
-                if (debug) {
-                    printf("DEBUG(error): erroropt: option %s", long_opts[option_index].name);
-                    if (optarg) {
-                        printf(" with args %s", optarg);
-                    }
-                    printf("\n");
+                g_critical("erroropt: option %s", long_opts[option_index].name);
+                if (optarg) {
+                    g_critical(" with args: %s", optarg);
                 }
                 break;
             case 'v':
+                g_debug("Printing version");
                 print_version();
                 break;
             case 'c':
                 command = optarg;
+                g_debug("command set: '%s'", command);
                 break;
             case 'p':
                 icon = optarg;
+                g_debug("icon set: '%s'", icon);
                 break;
             case 'm':
                 if (!isdigit(optarg[0])) {
-                    printf("--maxentries argument needs to be a number\n");
+                    g_critical("--maxentries argument needs to be a number");
                     exit(1);
                 }
                 max_number_out = std::stoi(optarg);
+                g_debug("max_number set: %i", max_number_out);
                 break;
             case 't':
                 if (!isdigit(optarg[0])) {
-                    printf("--timeout argument needs to be a number\n");
+                    g_critical("--timeout argument needs to be a number");
                     exit(1);
                 }
-                timeout = atoi(optarg) * 1000;
+                timeout = std::stoi(optarg) * 1000;
+                g_debug("timeout set: %i\n", timeout / 1000);
                 break;
             case 'i':
                 if (!isdigit(optarg[0])) {
-                    printf("--uid argument needs to be a number\n");
+                    g_critical("--uid argument needs to be a number");
                     exit(1);
                 }
-                if (setuid(atoi(optarg)) != 0) {
-                    printf("Couldn't change to the given uid!\n");
+                if (setuid(static_cast<__uid_t>(std::stoi(optarg))) != 0) {
+                    g_critical("Couldn't change to the given uid!");
                     exit(1);
                 }
+                g_debug("uid set");
                 break;
             case 'u':
                 if (strcmp(optarg, "low") == 0) {
@@ -155,73 +167,83 @@ int main(int argc, char **argv) {
                 } else if (strcmp(optarg, "critical") == 0) {
                     urgency = NOTIFY_URGENCY_CRITICAL;
                 } else {
-                    printf("--urgency has to be 'low', 'normal' or 'critical\n");
+                    g_critical("--urgency has to be 'low', 'normal' or 'critical");
                     exit(1);
                 }
+                g_debug("urgency set: %i", urgency);
                 break;
             case 'l':
                 will_loop = TRUE;
                 if (!isdigit(optarg[0])) {
-                    printf("--loop-time argument needs to be a number\n");
+                    g_critical("--loop-time argument needs to be a number\n");
                     exit(1);
                 }
-                loop_time = atoi(optarg) * 60;
+                loop_time = std::stoi(optarg) * 60;
+                g_debug("loop_time set: %i", loop_time / 60);
                 break;
-            case 'd':
-                debug = TRUE;
-                break;
+
             case 'f':
                 if (!isdigit(optarg[0])) {
-                    printf("--ftimeout argument needs to be a number\n");
+                    g_critical("--ftimeout argument needs to be a number");
                     exit(1);
                 }
-                manual_timeout = atoi(optarg) * 60;
+                manual_timeout = std::stoi(optarg) * 60;
                 if (!will_loop) {
-                    printf("--ftimeout can't be used without or before --loop-time\n");
+                    g_critical("--ftimeout can't be used without or before --loop-time");
                     exit(1);
                 }
                 if (manual_timeout > loop_time) {
-                    printf("Please set a value for --ftimeout that is higher than --loop-time\n");
+                    g_critical("Please set a value for --ftimeout that is higher than --loop-time");
                     exit(1);
                 }
+                g_debug("manual_timeout: %i", manual_timeout / 60);
                 break;
             case 'h': // -h or --help
             case '?': // Unrecognized option
-            default:
-                PrintHelp(argv[0]);
+                PrintHelp();
                 break;
+            default:
+                exit(1);
         }
     }
 
-    std::unique_ptr<CliWrapper> checkUpdatesCmd = std::make_unique<CliWrapper>("/bin/checkupdates");
+    if (aur) {
+        g_debug("aur is on");
+    }
+    if (!ignore_pkg_flag) {
+        g_debug("ignoring pacman.conf IgnorePkg variable.\n");
+    }
+    g_debug("running command '%s' for updates", command);
+    auto checkUpdatesCmd = std::make_unique<CliWrapper>(command);
     const std::string &checkUpdateOut = checkUpdatesCmd->execute();
     std::string aurHelperOut;
     if (aur) {
-        std::cout << "Checking AUR" << std::endl;
-        std::unique_ptr<CliWrapper> aurHelperCmd = std::make_unique<CliWrapper>("/bin/auracle sync");
+        g_debug("running command '%s' for AUR updates", aurCommand);
+        auto aurHelperCmd = std::make_unique<CliWrapper>(aurCommand);
         aurHelperOut = aurHelperCmd->execute();
     }
     if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
-        notify_init("Aarchup");
+        notify_init("New Updates");
         std::string finalOut;
         if (aurHelperOut.empty()) {
             finalOut = checkUpdateOut;
         } else if (checkUpdateOut.empty()) {
-            finalOut = "AUR updates:\n"+aurHelperOut;
+            finalOut = AUR_HEADER+aurHelperOut;
         } else {
-            finalOut = checkUpdateOut+"\nAUR updates:\n"+aurHelperOut;
+            finalOut = checkUpdateOut+AUR_HEADER+aurHelperOut;
         }
-        NotifyNotification *n = notify_notification_new("New updates for Arch Linux available!",
-                                                        finalOut.c_str(), nullptr);
+        g_debug("preparing notification with text '%s'", finalOut.c_str());
+        NotifyNotification *n = notify_notification_new("New updates for Arch Linux available!", finalOut.c_str(),
+                                                        nullptr);
         notify_notification_set_timeout(n, 5000);
         notify_notification_set_urgency(n, urgency);
+        g_debug("showing notification");
         if (!notify_notification_show(n, nullptr)) {
-            std::cerr << "Failed to show notification" << std::endl;
+            g_critical("Failed to show notification");
             return -1;
         }
     } else {
-        std::cout << "No updates found" << std::endl;
+        g_message("No updates found");
     }
-
     return 0;
 }
