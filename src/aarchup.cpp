@@ -12,10 +12,10 @@
 #include "CliWrapper.hpp"
 #include <glib.h>
 #include <string.h>
+#include <libvdesnmp.h>
 
 #define G_LOG_DOMAIN ((gchar*) 0)
 #define AUR_HEADER "AUR updates:\n"
-#define STREQ !strcmp
 #define VERSION_NUMBER "2.0.0"
 
 /* Prints the help. */
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
                     exit(1);
                 }
                 loop_time = std::stoi(optarg) * 60;
-                g_debug("loop_time set: %i", loop_time / 60);
+                g_debug("loop_time set: %i min(s)", loop_time / 60);
                 break;
 
             case 'f':
@@ -211,39 +211,114 @@ int main(int argc, char **argv) {
         g_debug("aur is on");
     }
     if (!ignore_pkg_flag) {
-        g_debug("ignoring pacman.conf IgnorePkg variable.\n");
+        g_debug("ignoring pacman.conf IgnorePkg variable");
     }
-    g_debug("running command '%s' for updates", command);
-    auto checkUpdatesCmd = std::make_unique<CliWrapper>(command);
-    const std::string &checkUpdateOut = checkUpdatesCmd->execute();
-    std::string aurHelperOut;
-    if (aur) {
-        g_debug("running command '%s' for AUR updates", aurCommand);
-        auto aurHelperCmd = std::make_unique<CliWrapper>(aurCommand);
-        aurHelperOut = aurHelperCmd->execute();
-    }
-    if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
-        notify_init("New Updates");
-        std::string finalOut;
-        if (aurHelperOut.empty()) {
-            finalOut = checkUpdateOut;
-        } else if (checkUpdateOut.empty()) {
-            finalOut = AUR_HEADER+aurHelperOut;
-        } else {
-            finalOut = checkUpdateOut+AUR_HEADER+aurHelperOut;
+
+    int offset = 0;
+    NotifyNotification *my_notify = nullptr;
+    const char *name = "New Updates";
+    const char *category = "update";
+    GError *error = nullptr;
+    do {
+        int i = 0;
+        if (i < max_number_out) {
+            g_debug("running command '%s' for updates", command);
+            auto checkUpdatesCmd = std::make_unique<CliWrapper>(command);
+            const std::string &checkUpdateOut = checkUpdatesCmd->execute();
+            std::string aurHelperOut;
+            if (aur && i < max_number_out) {
+                g_debug("running command '%s' for AUR updates", aurCommand);
+                auto aurHelperCmd = std::make_unique<CliWrapper>(aurCommand);
+                aurHelperOut = aurHelperCmd->execute();
+            }
+            if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
+                std::string finalOut = "There are updates for:\n";
+                if (aurHelperOut.empty()) {
+                    finalOut = finalOut+checkUpdateOut;
+                } else if (checkUpdateOut.empty()) {
+                    finalOut = finalOut+AUR_HEADER+aurHelperOut;
+                } else {
+                    finalOut = finalOut+checkUpdateOut+AUR_HEADER+aurHelperOut;
+                }
+
+                if (!notify_is_initted()) {
+                    notify_init(name);
+                }
+                bool persist = TRUE;
+                gboolean success;
+                /* Loop to try again if error on showing notification. */
+                do {
+                    if (!my_notify) {
+                        my_notify = notify_notification_new("New updates for Arch Linux available!", finalOut.c_str(),
+                                                            icon);
+                    } else {
+                        notify_notification_update(my_notify, "New updates for Arch Linux available!", finalOut.c_str(),
+                                                   icon);
+                    }
+                    notify_notification_set_timeout(my_notify, timeout);
+                    notify_notification_set_category(my_notify, category);
+                    notify_notification_set_urgency(my_notify, urgency);
+                    success = notify_notification_show(my_notify, &error);
+                    if (success)
+                        g_debug("Notification shown successfully");
+                    else {
+                        if (persist) {
+                            g_warning("Notification failed, reason:\n\t[%i]%s\n", error->code, error->message);
+                        } else {
+                            g_critical("Notification failed, reason:\n\t[%i]%s\n", error->code, error->message);
+                        }
+                        g_error_free(error);
+                        error = nullptr;
+                        if (persist) {
+                            g_warning(
+                                    "It could have been caused by an environment restart, trying to work around it by re-init libnotify");
+                            my_notify = nullptr;
+                            notify_uninit();
+                            notify_init(name);
+                            persist = FALSE;
+                        }
+                    }
+                } while (!my_notify);
+                if (error) {
+                    g_error_free(error);
+                    error = nullptr;
+                }
+                if (manual_timeout && success && will_loop) {
+                    g_debug("Will close notification in %i minutes (this time will be reduced from the loop-time)",
+                            manual_timeout / 60);
+                    sleep(static_cast<unsigned int>(manual_timeout));
+                    offset = manual_timeout;
+                    if (notify_notification_close(my_notify, &error))
+                        g_debug("Notification closed");
+                    else {
+                        g_warning("Failed to close, reason:\n\t[%i]%s", error->code, error->message);
+                    }
+                    if (error) {
+                        g_error_free(error);
+                        error = nullptr;
+                    }
+                }
+            } else {
+                g_message("No updates found");
+                if (my_notify) {
+                    g_debug("Previous notification found. Closing it in case it was still opened.");
+                    if (notify_notification_close(my_notify, &error))
+                        g_debug("Notification closed");
+                    else {
+                        g_warning("Failed to close, reason:\n\t[%i]%s", error->code, error->message);
+                    }
+                    if (error) {
+                        g_error_free(error);
+                        error = nullptr;
+                    }
+                }
+            }
         }
-        g_debug("preparing notification with text '%s'", finalOut.c_str());
-        NotifyNotification *n = notify_notification_new("New updates for Arch Linux available!", finalOut.c_str(),
-                                                        nullptr);
-        notify_notification_set_timeout(n, 5000);
-        notify_notification_set_urgency(n, urgency);
-        g_debug("showing notification");
-        if (!notify_notification_show(n, nullptr)) {
-            g_critical("Failed to show notification");
-            return -1;
+        if (will_loop) {
+            g_debug("Next run will be in %i minutes", (loop_time-offset) / 60);
+            sleep(static_cast<unsigned int>(loop_time-offset));
+            offset = 0;
         }
-    } else {
-        g_message("No updates found");
-    }
+    } while (will_loop);
     return 0;
 }
