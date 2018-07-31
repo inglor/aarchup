@@ -19,20 +19,26 @@ addons:
     packages:
     - lcov
     - cmake
-    - gcc
-    - clang
+    - gcc-8.1
+    - g++-8.1
+    - clang-6
 
 branches:
   only:
   - cpp
 
 script:
-  mkdir -p build
-  cd build
-  showinfo "Configuring CMake"
-  cmake -DCMAKE_BUILD_TYPE=Debug ..
-  showinfo "Compiling"
-  make
+- sudo ln -s /usr/bin/gcc-8.1 /usr/local/bin/gcc
+- sudo ln -s /usr/bin/g++-8.1 /usr/local/bin/g++
+- sudo ln -s /usr/bin/clang-6 /usr/local/bin/clang
+# Check versions of gcc, g++ and cmake
+- gcc -v && g++ -v && cmake --version
+- mkdir -p build
+- cd build
+- showinfo "Configuring CMake"
+- cmake -DCMAKE_BUILD_TYPE=Debug ..
+- showinfo "Compiling"
+- make
 
 env:
   global:
