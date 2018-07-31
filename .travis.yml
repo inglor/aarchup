@@ -1,0 +1,39 @@
+language: cpp
+sudo: false
+dist: trusty
+compiler:
+- gcc
+- clang
+os:
+- linux
+
+install:
+- make
+- get-deps
+- cmake
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - lcov
+    - cmake
+    - gcc
+    - clang
+
+branches:
+  only:
+  - cpp
+
+script:
+  mkdir -p build
+  cd build
+  showinfo "Configuring CMake"
+  cmake -DCMAKE_BUILD_TYPE=Debug ..
+  showinfo "Compiling"
+  make
+
+env:
+  global:
+  - LANG="en_US.UTF-8"
