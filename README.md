@@ -1,5 +1,7 @@
 # Aarchup
 
+[![Build Status](https://travis-ci.org/inglor/aarchup.svg?branch=cpp)](https://travis-ci.org/inglor/aarchup)
+
 aarchup (https://github.com/aericson/aarchup) is a small C application which informs the user when system-updates for Archlinux are available. It's licenced under the GPLv3. In contrast to other update notifiers aarchup is intended to be lightweight and just do what it should: notify about possible updates.
 It is forked from Rorschach's archup (http://www.nongnu.org/archup/).
 
