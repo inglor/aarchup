@@ -11,23 +11,25 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-6
+        - g++-7
     env:
-    - COMPILER=g++-6 CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
+    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
   - compiler: clang
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        - llvm-toolchain-trusty-4.0
+        - llvm-toolchain-trusty-5.0
         packages:
-        - clang-4.0
+        - cmake
+        - clang-5.0
         - libc++-dev
         - libc++abi-dev
     env:
-    - COMPILER=clang++-4.0 CC=clang-4.0 CXX=clang++-4.0
+    - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
 before_install:
+- eval "${MATRIX_EVAL}"
 - sudo apt-get install -y libnotify-dev
 - sudo apt-get install -y libglib2.0-dev
 
