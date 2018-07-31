@@ -12,7 +12,6 @@
 #include "CliWrapper.hpp"
 #include <glib.h>
 #include <string.h>
-#include <libvdesnmp.h>
 
 #define G_LOG_DOMAIN ((gchar*) 0)
 #define AUR_HEADER "AUR updates:\n"
