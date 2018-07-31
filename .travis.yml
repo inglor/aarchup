@@ -1,36 +1,36 @@
 language: cpp
 sudo: false
 dist: trusty
-compiler:
-- gcc
-- clang
-os:
-- linux
-
-install:
-- make
-- get-deps
-- cmake
-
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - lcov
-    - cmake
-    - gcc-8.1
-    - g++-8.1
-    - clang-6
+cache: bundler
+# Setup the compilers:
+matrix:
+  include:
+  - compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+    env: CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
+  - compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-trusty-4.0
+        packages:
+        - clang-4.0
+        - libc++-dev
+        - libc++abi-dev
+    env:
+    - CC=clang-4.0 CXX=clang++-4.0
 
 branches:
   only:
   - cpp
 
 script:
-- sudo ln -s /usr/bin/gcc-8.1 /usr/local/bin/gcc
-- sudo ln -s /usr/bin/g++-8.1 /usr/local/bin/g++
-- sudo ln -s /usr/bin/clang-6 /usr/local/bin/clang
 # Check versions of gcc, g++ and cmake
 - gcc -v && g++ -v && cmake --version
 - mkdir -p build
