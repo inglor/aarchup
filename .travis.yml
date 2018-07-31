@@ -2,7 +2,7 @@ language: cpp
 sudo: false
 dist: trusty
 cache: bundler
-# Setup the compilers:
+
 matrix:
   include:
   - compiler: gcc
@@ -12,7 +12,8 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-6
-    env: CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
+    env:
+    - CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
   - compiler: clang
     addons:
       apt:
@@ -25,6 +26,10 @@ matrix:
         - libc++abi-dev
     env:
     - CC=clang-4.0 CXX=clang++-4.0
+
+before_install:
+- sudo apt-get install -y libnotify
+- sudo apt-get install -y glib2.0
 
 branches:
   only:
