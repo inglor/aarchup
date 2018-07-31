@@ -38,13 +38,9 @@ branches:
   - cpp
 
 script:
-# Check versions of gcc, g++ and cmake
-- gcc -v && g++ -v && cmake --version
 - mkdir -p build
 - cd build
-- showinfo "Configuring CMake"
-- cmake -DCMAKE_BUILD_TYPE=Debug ..
-- showinfo "Compiling"
+- cmake -DCMAKE_BUILD_TYPE=Release ..
 - make
 
 env:
