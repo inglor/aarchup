@@ -13,7 +13,7 @@ matrix:
         packages:
         - g++-6
     env:
-    - CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
+    - COMPILER=g++-6 CC=gcc-6 CXX=g++-6 TARGETS="compiler-gcc"
   - compiler: clang
     addons:
       apt:
@@ -25,11 +25,11 @@ matrix:
         - libc++-dev
         - libc++abi-dev
     env:
-    - CC=clang-4.0 CXX=clang++-4.0
+    - COMPILER=clang++-4.0 CC=clang-4.0 CXX=clang++-4.0
 
 before_install:
-- sudo apt-get install -y libnotify
-- sudo apt-get install -y glib2.0
+- sudo apt-get install -y libnotify-dev
+- sudo apt-get install -y libglib2.0-dev
 
 branches:
   only:
