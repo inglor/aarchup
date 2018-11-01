@@ -298,7 +298,7 @@ int main(int argc, char **argv) {
                     }
                 }
             } else {
-                g_message("No updates found");
+                g_info("No updates found");
                 if (my_notify) {
                     g_debug("Previous notification found. Closing it in case it was still opened.");
                     if (notify_notification_close(my_notify, &error))
