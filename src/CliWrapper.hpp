@@ -1,27 +1,25 @@
 #ifndef AARCHUP_CLIWRAPPER_H
 #define AARCHUP_CLIWRAPPER_H
 
-#include <iostream>
+#include <array>
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <array>
-#include <sstream>
 
 class CliWrapper {
-    const char *_cliCommand;
-public:
+  const char *_cliCommand;
 
-    CliWrapper(const char *cliCommand);
+ public:
+  CliWrapper(const char *cliCommand);
 
-    std::string execute();
+  std::string execute();
 
-    virtual ~CliWrapper();
+  virtual ~CliWrapper();
 
-    std::string parseOutput(const std::shared_ptr<FILE> &pipe) const;
+  std::string parseOutput(const std::shared_ptr<FILE> &pipe) const;
 };
-
 
 #endif
