@@ -17,7 +17,7 @@
 #define VERSION_NUMBER "2.0.0"
 
 /* Prints the help. */
-int PrintHelp() {
+int print_help() {
   std::cout
       << "Usage: aarchup [options]\n\n"
          "Options:\n"
@@ -52,8 +52,8 @@ int PrintHelp() {
          "used.\n"
          "                                      For more information on it "
          "check man.\n"
-         "          --help                      Prints this help.\n"
-         "          --version                   Shows the version.\n"
+         "          --help|-h                   Prints this help.\n"
+         "          --version|-v                Shows the version.\n"
          "          --aur                       Check aur for new packages "
          "too. Will need auracle installed.\n"
          "          --debug|-d                  Print debug info.\n"
@@ -101,6 +101,13 @@ int main(int argc, char **argv) {
 
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, g_log_default_handler,
                     nullptr);
+
+  if (argc > 1) {
+    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
+      print_version();
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
+      print_help();
+  }
 
   /* Parse commandline options */
   const char *const short_opts = "c:p:m:t:i:u:l:df:";
@@ -226,7 +233,7 @@ int main(int argc, char **argv) {
         break;
       case 'h':  // -h or --help
       case '?':  // Unrecognized option
-        PrintHelp();
+        print_help();
         break;
       default:
         exit(1);
