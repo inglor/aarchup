@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/inglor/aarchup.svg?branch=cpp)](https://travis-ci.org/inglor/aarchup)
 
-aarchup (https://github.com/aericson/aarchup) is a small C application which informs the user when system-updates for Archlinux are available. It's licenced under the GPLv3. In contrast to other update notifiers aarchup is intended to be lightweight and just do what it should: notify about possible updates.
-It is forked from Rorschach's archup (http://www.nongnu.org/archup/).
+archup (https://github.com/inglor/aarchup) is a small C++ application which informs the user when system-updates for Archlinux are available.
+It is forked from aarchup (https://github.com/aericson/aarchup) and rewritten on C++.
 
 aarchup uses GTk+ and libnotify to show a desktop notification if updates are available. It follows the unix-philosophy of "just doing one thing, but doing  it  well". It  can be used to regulary check for new updates and show a desktop notification if there are any.
 
@@ -11,15 +11,13 @@ Read manpages for configuration.
 
 ## Thanks
 
-* Rorschach, for the great tool and the credits are all his.
-* Lucke, features requests and bugs reports.
-* [Vinta Software Studio](http://www.vinta.com.br) for encouraging it's developers to get involved with open source software.
+* Rorschach, for the great tool and the credits are all his (https://github.com/aericson/aarchup)
+The reason this fork exists is to add some build testing on aarchup and improve see modern c++ world.
 
 ## Bugs
 
-Bugs can be repported by e-mails at de.ericson@gmail.com
-or at https://bbs.archlinux.org/viewtopic.php?id=119129
+Bugs can be reported in GitHub (https://github.com/inglor/aarchup)
 
 ## Contact
 
-You can contact me with de.ericson@gmail.com
+You can contact me with artafinde<at>gmail.com
