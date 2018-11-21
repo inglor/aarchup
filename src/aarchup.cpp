@@ -1,7 +1,8 @@
 #include <ctype.h>
 #include <getopt.h>
-#include <glib.h>
 #include <libnotify/notify.h>
+#include <plog/Appenders/ConsoleAppender.h>
+#include <plog/Log.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +13,8 @@
 #include <memory>
 #include "CliWrapper.hpp"
 
-//#define G_LOG_DOMAIN ((gchar *)0)
 #define AUR_HEADER "AUR updates:\n"
-#define VERSION_NUMBER "2.0.0"
+#define VERSION_NUMBER "2.1.0"
 
 /* Prints the help. */
 int print_help() {
@@ -32,7 +32,7 @@ int print_help() {
          "packages which shall be displayed in the notification.\n"
          "                                      The default value is 30.\n"
          "          --timeout|-t [value]        Set the timeout after which "
-         "the notification disappers in seconds.\n"
+         "the notification disappears in seconds.\n"
          "                                      The default value is 3600 "
          "seconds, which is 1 hour.\n"
          "          --uid|-i [value]            Set the uid of the process.\n"
@@ -63,10 +63,6 @@ int print_help() {
          "--timeout works or without --loop-time [value].\n"
          "                                      The value for this option "
          "should be in minutes.\n"
-         "          --pkg-no-ignore             If this flag is set will not "
-         "use the IgnorePkg variable from pacman.conf. Without the flag will "
-         "ignore those\n"
-         "                                      packages\n"
          "\nMore information can be found in the manpage.\n";
   exit(0);
 }
@@ -83,24 +79,33 @@ int print_version() {
   exit(0);
 }
 
+std::vector<std::string> split(const std::string &s, char delimiter) {
+  std::vector<std::string> tokens;
+  std::string token;
+  std::istringstream tokenStream(s);
+  while (std::getline(tokenStream, token, delimiter)) {
+    tokens.push_back(token);
+  }
+  return tokens;
+}
+
 int main(int argc, char **argv) {
   NotifyUrgency urgency = NOTIFY_URGENCY_NORMAL;
   const char *command = "/usr/bin/checkupdates";
   const char *aurCommand = "/usr/bin/auracle sync";
 
-  int timeout = 3600 * 1000;
-  int max_number_out = 30;
-  int loop_time = 3600;
-  int manual_timeout = 0;
+  long timeout = 3600 * 1000;
+  long max_number_out = 30;
+  long loop_time = 3600;
+  long manual_timeout = 0;
   gchar *icon = nullptr;
   bool will_loop = FALSE;
   static int help_flag = 0;
   static int version_flag = 0;
   static int aur = 0;
-  static int ignore_pkg_flag = 1;
 
-  g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, g_log_default_handler,
-                    nullptr);
+  plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+  plog::init(plog::warning, &consoleAppender);
 
   if (argc > 1) {
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
@@ -124,7 +129,6 @@ int main(int argc, char **argv) {
       {"aur", no_argument, &aur, 1},
       {"ftimeout", required_argument, nullptr, 'f'},
       {"debug", no_argument, nullptr, 'd'},
-      {"pkg-no-ignore", no_argument, &ignore_pkg_flag, 0},
       {nullptr, 0, nullptr, 0},
   };
 
@@ -138,57 +142,56 @@ int main(int argc, char **argv) {
     /* Short opts */
     switch (opt) {
       case 'd':
-        g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-                          g_log_default_handler, nullptr);
-        putenv(const_cast<char *>("G_MESSAGES_DEBUG=all"));
+        plog::get()->setMaxSeverity(plog::verbose);
         break;
       case 0:
         if (long_opts[option_index].flag) {
           break;
         }
-        g_critical("erroropt: option %s", long_opts[option_index].name);
+        LOGE << "Undefined option " << long_opts[option_index].name;
         if (optarg) {
-          g_critical(" with args: %s", optarg);
+          LOGE << " with args " << optarg;
         }
         break;
       case 'v':
-        g_debug("Printing version");
+        LOGV << "Printing version";
         print_version();
         break;
       case 'c':
         command = optarg;
-        g_debug("command set: '%s'", command);
+        LOGV << "Command set: '" << command << "'";
         break;
       case 'p':
         icon = optarg;
-        g_debug("icon set: '%s'", icon);
+        LOGV << "Icon set: '" << icon << "'";
         break;
       case 'm':
         if (!isdigit(optarg[0])) {
-          g_critical("--maxentries argument needs to be a number");
+          LOGF << "Argument '--maxentries' should be number";
           exit(1);
         }
-        max_number_out = std::stoi(optarg);
-        g_debug("max_number set: %i", max_number_out);
+        max_number_out = std::stol(optarg);
+        LOGV << "Max_number set: '" << max_number_out << "' lines";
         break;
       case 't':
         if (!isdigit(optarg[0])) {
-          g_critical("--timeout argument needs to be a number");
+          LOGF << "Argument '--timeout' should be number";
           exit(1);
         }
-        timeout = std::stoi(optarg) * 1000;
-        g_debug("timeout set: %i\n", timeout / 1000);
+        timeout = std::stol(optarg) * 1000;
+        LOGV << "Timeout set: " << timeout / 1000 << " sec(s)";
+        ;
         break;
       case 'i':
         if (!isdigit(optarg[0])) {
-          g_critical("--uid argument needs to be a number");
+          LOGF << "Argument '--uid' should be number";
           exit(1);
         }
-        if (setuid(static_cast<__uid_t>(std::stoi(optarg))) != 0) {
-          g_critical("Couldn't change to the given uid!");
+        if (setuid(static_cast<__uid_t>(std::stol(optarg))) != 0) {
+          LOGF << "Couldn't change to the given uid, aborting";
           exit(1);
         }
-        g_debug("uid set");
+        LOGV << "Setting uid to: " << optarg;
         break;
       case 'u':
         if (strcmp(optarg, "low") == 0) {
@@ -198,41 +201,40 @@ int main(int argc, char **argv) {
         } else if (strcmp(optarg, "critical") == 0) {
           urgency = NOTIFY_URGENCY_CRITICAL;
         } else {
-          g_critical("--urgency has to be 'low', 'normal' or 'critical");
+          LOGF << "Argument '--urgency' has to be 'low', 'normal' or 'critical";
           exit(1);
         }
-        g_debug("urgency set: %i", urgency);
+        LOGV << "Urgency set: " << urgency;
         break;
       case 'l':
         will_loop = TRUE;
         if (!isdigit(optarg[0])) {
-          g_critical("--loop-time argument needs to be a number\n");
+          LOGF << "Argument '--loop-time' should be number";
           exit(1);
         }
-        loop_time = std::stoi(optarg) * 60;
-        g_debug("loop_time set: %i min(s)", loop_time / 60);
+        loop_time = std::stol(optarg) * 60;
+        LOGV << "Loop_time set: " << loop_time / 60 << " min(s)";
         break;
-
       case 'f':
         if (!isdigit(optarg[0])) {
-          g_critical("--ftimeout argument needs to be a number");
+          LOGF << "Argument '--ftimeout' should be number";
           exit(1);
         }
-        manual_timeout = std::stoi(optarg) * 60;
+        manual_timeout = std::stol(optarg) * 60;
         if (!will_loop) {
-          g_critical("--ftimeout can't be used without or before --loop-time");
+          LOGF << "Argument '--ftimeout' can't be used without or before "
+                  "'--loop-time'";
           exit(1);
         }
         if (manual_timeout > loop_time) {
-          g_critical(
-              "Please set a value for --ftimeout that is higher than "
-              "--loop-time");
+          LOGF << "Please set a value for '--ftimeout' that is lower than "
+                  "'--loop-time'";
           exit(1);
         }
-        g_debug("manual_timeout: %i", manual_timeout / 60);
+        LOGV << "Manual_timeout: " << manual_timeout / 60 << " min(s)";
         break;
-      case 'h':  // -h or --help
-      case '?':  // Unrecognized option
+      case 'h':
+      case '?':
         print_help();
         break;
       default:
@@ -240,126 +242,120 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (aur) {
-    g_debug("aur is on");
-  }
-  if (!ignore_pkg_flag) {
-    g_debug("ignoring pacman.conf IgnorePkg variable");
-  }
-
-  int offset = 0;
+  long offset = 0;
   NotifyNotification *my_notify = nullptr;
   const char *name = "New Updates";
   const char *category = "update";
   GError *error = nullptr;
   do {
-    int i = 0;
-    if (i < max_number_out) {
-      g_debug("running command '%s' for updates", command);
-      auto checkUpdatesCmd = std::make_unique<CliWrapper>(command);
-      const std::string &checkUpdateOut = checkUpdatesCmd->execute();
-      std::string aurHelperOut;
-      if (aur && i < max_number_out) {
-        g_debug("running command '%s' for AUR updates", aurCommand);
-        auto aurHelperCmd = std::make_unique<CliWrapper>(aurCommand);
-        aurHelperOut = aurHelperCmd->execute();
+    LOGD << "Executing command '" << command << "' for updates";
+    auto checkUpdatesCmd = std::make_unique<CliWrapper>(command);
+    const std::string &checkUpdateOut = checkUpdatesCmd->execute();
+    std::string aurHelperOut;
+    if (aur) {
+      LOGD << "Executing command '" << aurCommand << "' for AUR updates";
+      auto aurHelperCmd = std::make_unique<CliWrapper>(aurCommand);
+      aurHelperOut = aurHelperCmd->execute();
+    }
+    if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
+      std::string finalOut = "There are updates for:\n";
+      if (aurHelperOut.empty()) {
+        finalOut = finalOut + checkUpdateOut;
+      } else if (checkUpdateOut.empty()) {
+        finalOut = finalOut + AUR_HEADER + aurHelperOut;
+      } else {
+        finalOut = finalOut + checkUpdateOut + AUR_HEADER + aurHelperOut;
       }
-      if (!checkUpdateOut.empty() || (!aurHelperOut.empty())) {
-        std::string finalOut = "There are updates for:\n";
-        if (aurHelperOut.empty()) {
-          finalOut = finalOut + checkUpdateOut;
-        } else if (checkUpdateOut.empty()) {
-          finalOut = finalOut + AUR_HEADER + aurHelperOut;
+      auto outputLines = split(finalOut, '\n');
+      int lines = 0;
+      std::stringstream ss;
+      for (auto &outputLine : outputLines) {
+        ss << outputLine << '\n';
+        lines++;
+        if (lines >= max_number_out) {
+          break;
+        }
+      }
+      if (!notify_is_initted()) {
+        notify_init(name);
+      }
+      bool persist = TRUE;
+      gboolean success;
+      do {
+        if (!my_notify) {
+          my_notify = notify_notification_new(
+              "New updates for Arch Linux available!", ss.str().c_str(), icon);
         } else {
-          finalOut = finalOut + checkUpdateOut + AUR_HEADER + aurHelperOut;
+          notify_notification_update(my_notify,
+                                     "New updates for Arch Linux available!",
+                                     ss.str().c_str(), icon);
         }
-
-        if (!notify_is_initted()) {
-          notify_init(name);
-        }
-        bool persist = TRUE;
-        gboolean success;
-        /* Loop to try again if error on showing notification. */
-        do {
-          if (!my_notify) {
-            my_notify =
-                notify_notification_new("New updates for Arch Linux available!",
-                                        finalOut.c_str(), icon);
+        notify_notification_set_timeout(my_notify, timeout);
+        notify_notification_set_category(my_notify, category);
+        notify_notification_set_urgency(my_notify, urgency);
+        success = notify_notification_show(my_notify, &error);
+        if (success)
+          LOGD << "Notification shown successfully";
+        else {
+          if (persist) {
+            LOGW << "Notification failed, reason:\n\t[" << error->code << "] "
+                 << error->message << "\n";
           } else {
-            notify_notification_update(my_notify,
-                                       "New updates for Arch Linux available!",
-                                       finalOut.c_str(), icon);
+            LOGE << "Notification failed, reason:\n\t[" << error->code << "] "
+                 << error->message << "\n";
           }
-          notify_notification_set_timeout(my_notify, timeout);
-          notify_notification_set_category(my_notify, category);
-          notify_notification_set_urgency(my_notify, urgency);
-          success = notify_notification_show(my_notify, &error);
-          if (success)
-            g_debug("Notification shown successfully");
-          else {
-            if (persist) {
-              g_warning("Notification failed, reason:\n\t[%i]%s\n", error->code,
-                        error->message);
-            } else {
-              g_critical("Notification failed, reason:\n\t[%i]%s\n",
-                         error->code, error->message);
-            }
-            g_error_free(error);
-            error = nullptr;
-            if (persist) {
-              g_warning(
-                  "It could have been caused by an environment restart, trying "
-                  "to work around it by re-init libnotify");
-              my_notify = nullptr;
-              notify_uninit();
-              notify_init(name);
-              persist = FALSE;
-            }
+          g_error_free(error);
+          error = nullptr;
+          if (persist) {
+            LOGW << "It could have been caused by an environment restart, "
+                    "trying to work around it by re-init libnotify";
+            my_notify = nullptr;
+            notify_uninit();
+            notify_init(name);
+            persist = FALSE;
           }
-        } while (!my_notify);
+        }
+      } while (!my_notify);
+      if (error) {
+        g_error_free(error);
+        error = nullptr;
+      }
+      if (manual_timeout && success && will_loop) {
+        LOGD << "Will close notification in " << manual_timeout / 60
+             << " minutes (this time will be reduced from the loop-time)";
+        sleep(static_cast<unsigned int>(manual_timeout));
+        offset = manual_timeout;
+        if (notify_notification_close(my_notify, &error))
+          LOGD << "Notification closed";
+        else {
+          LOGW << "Failed to close, reason:\n\t[" << error->code << "] "
+               << error->message;
+        }
         if (error) {
           g_error_free(error);
           error = nullptr;
         }
-        if (manual_timeout && success && will_loop) {
-          g_debug(
-              "Will close notification in %i minutes (this time will be "
-              "reduced from the loop-time)",
-              manual_timeout / 60);
-          sleep(static_cast<unsigned int>(manual_timeout));
-          offset = manual_timeout;
-          if (notify_notification_close(my_notify, &error))
-            g_debug("Notification closed");
-          else {
-            g_warning("Failed to close, reason:\n\t[%i]%s", error->code,
-                      error->message);
-          }
-          if (error) {
-            g_error_free(error);
-            error = nullptr;
-          }
+      }
+    } else {
+      LOGI << "No updates found";
+      if (my_notify) {
+        LOGD << "Previous notification found. Closing it in case it was "
+                "still opened";
+        if (notify_notification_close(my_notify, &error))
+          LOGD << "Notification closed";
+        else {
+          LOGW << "Failed to close, reason:\n\t[" << error->code << "] "
+               << error->message;
         }
-      } else {
-        g_info("No updates found");
-        if (my_notify) {
-          g_debug(
-              "Previous notification found. Closing it in case it was still "
-              "opened.");
-          if (notify_notification_close(my_notify, &error))
-            g_debug("Notification closed");
-          else {
-            g_warning("Failed to close, reason:\n\t[%i]%s", error->code,
-                      error->message);
-          }
-          if (error) {
-            g_error_free(error);
-            error = nullptr;
-          }
+        if (error) {
+          g_error_free(error);
+          error = nullptr;
         }
       }
     }
+
     if (will_loop) {
-      g_debug("Next run will be in %i minutes", (loop_time - offset) / 60);
+      LOGD << "Next run will be in " << (loop_time - offset) / 60 << " minutes";
       sleep(static_cast<unsigned int>(loop_time - offset));
       offset = 0;
     }

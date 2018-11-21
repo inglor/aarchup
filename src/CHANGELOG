@@ -1,3 +1,7 @@
+aarchup-2.1.0 ()
+    * remove pkg-no-ignore param, fix some logic
+aarchup-2.0.0 ()
+    * rewritten in c++
 aarchup-1.8 (01/10/2015)
     * fix to work with new systemd/dbus
 aarchup-1.8 (30/09/2015)

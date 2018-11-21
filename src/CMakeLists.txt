@@ -20,11 +20,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 #    endif()
 #endif()
 
-find_package(GLIB REQUIRED)
 find_package(LibNotify REQUIRED)
 
-include_directories("${GLIB_INCLUDE_DIRS}")
-include_directories("${LIBNOTIFY_INCLUDE_DIRS}")
-
 add_executable(aarchup aarchup.cpp CliWrapper.cpp CliWrapper.hpp)
-target_link_libraries(aarchup ${GLIB_LIBRARIES} ${LIBNOTIFY_LIBRARIES})
+target_include_directories(aarchup PUBLIC "${LIBNOTIFY_INCLUDE_DIRS}" include)
+target_link_libraries(aarchup ${LIBNOTIFY_LIBRARIES})
