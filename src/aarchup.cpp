@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <memory>
-#include "CliWrapper.hpp"
+#include "CliWrapper.hh"
 
 #define AUR_HEADER "AUR updates:\n"
 #define VERSION_NUMBER "2.1.0"

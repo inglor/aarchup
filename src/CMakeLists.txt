@@ -22,6 +22,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(LibNotify REQUIRED)
 
-add_executable(aarchup aarchup.cpp CliWrapper.cpp CliWrapper.hpp)
+add_executable(aarchup aarchup.cpp CliWrapper.cc CliWrapper.hh)
 target_include_directories(aarchup PUBLIC "${LIBNOTIFY_INCLUDE_DIRS}" include)
 target_link_libraries(aarchup ${LIBNOTIFY_LIBRARIES})

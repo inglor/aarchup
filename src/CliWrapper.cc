@@ -1,4 +1,4 @@
-#include "CliWrapper.hpp"
+#include "CliWrapper.hh"
 
 using namespace std;
 
