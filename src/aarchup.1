@@ -1,10 +1,10 @@
-.TH "aarchup" "1" "JUN 2011" "aericson <de.ericson@gmail.com>" ""
+.TH "aarchup" "31" "DEC 2018" "Leonidas Spyropoulos <artafinde AT gmail DOT com>" ""
 .SH "NAME"
 aarchup \- lightweight pacman update notifier, a fork from archup by Rorschach
 .SH "SYNOPSIS"
 \fIaarchup\fR [options]
 .SH "DESCRIPTION"
-aarchup is a small C application which informs the user when system\-updates for Archlinux are available. It's licensed under the GPLv3. In contrast to other update notifiers aarchup is intended to be lightweight and just do what it should, notify about possible updates.
+aarchup is a small C++ application which informs the user when system\-updates for Archlinux are available. It's licensed under the GPLv3. In contrast to other update notifiers aarchup is intended to be lightweight and just do what it should, notify about possible updates.
 
 aarchup uses GTk+ and libnotify to show a desktop notification if updates are available. It follows the unix-philosophy of "just doing one thing, but doing it well". It notifies about new updates. With a systemd timer aarchup can be used to regularly check for new updates and get a desktop notification if there are some. It can also runs on it's own and check for updates regularly.
 .SH "OPTIONS"
@@ -25,7 +25,7 @@ aarchup uses GTk+ and libnotify to show a desktop notification if updates are av
                                       if none is specified, the default(60) will be used. See: Loop-time above.
           --help                      Prints this help.
           --version                   Shows the version.
-          --aur                       Check aur for new packages too. Will need cower installed.
+          --aur                       Check aur for new packages too. Will need auracle installed.
           --debug|-d                  Print debug info.
           --ftimeout [value]          Program will manually enforce timeout for closing notification.
                                       Do NOT use with --timeout, if --timeout works or without --loop-time [value].
@@ -39,28 +39,6 @@ aarchup uses GTk+ and libnotify to show a desktop notification if updates are av
 .SH "CONFIGURATION"
 aarchup can simply be invoked by executing it from the commandline. But you surely want to automate this task and let aarchup continuously be run with a systemd timer.
 There are two ways of automating aarchup runs. One setup is to use the --loop-time option and the other is using a systemd timer.
-
-\fIConfiguration File\fR
-
-You can set up a configuration file instead of passing commandline arguments.
-Simply create the file /etc/aarchup.conf
-edit it with the following syntax:
-.PP
-    # Comments are ignored
-    # The [main] line defines the group main
-    # You need to include this and no arguments
-    # can be placed before it.
-    # also notice that all options should be in the long form
-    # ie: for loop-time use only loop-time do not try to use 'l' or '-l'
-    [main]
-    # Argument on the left then '=' then the value of it
-    # ie:
-    loop-time=30
-    # Arguments without a value must have the '=' sign
-    # ie:
-    aur=
-.PP
-Please notice that if you have the file /etc/aarchup.conf all arguments passed to aarchup will be ignored except --help and --version.
 
 \fILoop-time\fR
 
@@ -78,7 +56,7 @@ Copy the file /usr/share/doc/aarchup/aarchupstartup.example
 .PP
 Edit the new file with different options if needed. Include --aur if you want to check for updates in AUR(you will need cower installed).
 
-Archup will run on next boot or you can manually start it running /usr/share/aarchup/aarchupstartup.sh
+Aarchup will run on next boot or you can manually start it running /usr/share/aarchup/aarchupstartup.sh
 
 
 \fIHourly\fR
@@ -108,7 +86,7 @@ Some hints on this:
 
 .SH "AUTHORS"
 Written originally by Rorschach.
-aarchup by aericson.
+aarchup by aericson. Current Cpp version by Leonidas Spyropoulos.
 .SH "CREDITS"
 Most of the credits goes to Rorshach for the original archup.
 The features made in the fork was made by aericson and can
@@ -116,10 +94,9 @@ be found in the CHANGELOG file.
 Also some minor changes were made by Andrew Kravchuk and can be
 found at his github(https://github.com/lockie/archup) logs.
 .SH "REPORTING BUGS"
-Bugs? If you find one, send an email to de.ericson@gmail.com
-or at https://bbs.archlinux.org/viewtopic.php?id=119129
+Bugs? If you find one please raise an Issue at GitHub https://github.com/inglor/aarchup
 .SH "COPYRIGHT"
-Copyright 2011 aericson <de.ericson@gmail.com>
+Copyright 2018 Leonidas Spyropoulos <artafinde AT gmail DOT com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
