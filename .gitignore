@@ -35,3 +35,4 @@ autom4te.cache
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+*.gz
