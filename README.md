@@ -1,6 +1,6 @@
 # Aarchup
 
-[![Build Status](https://travis-ci.org/inglor/aarchup.svg?branch=cpp)](https://travis-ci.org/inglor/aarchup)
+[![Build Status](https://travis-ci.com/inglor/aarchup.svg?branch=cpp)](https://travis-ci.com/inglor/aarchup)
 
 archup (https://github.com/inglor/aarchup) is a small C++ application which informs the user when system-updates for Archlinux are available.
 It is forked from aarchup (https://github.com/aericson/aarchup) and rewritten on C++.
