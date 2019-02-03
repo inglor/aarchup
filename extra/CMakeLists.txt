@@ -1,0 +1,7 @@
+SET(icon_files archlogo.png archlogo.svg)
+INSTALL(FILES aarchup.desktop DESTINATION "share/doc/aarchup")
+INSTALL(FILES aarchupstartup.sh DESTINATION "share/doc/aarchup")
+INSTALL(FILES ${icon_files} DESTINATION "share/aarchup")
+SET(systemd_files aarchup.timer aarchup.service)
+INSTALL(FILES noxaarchup.sh DESTINATION "share/aarchup")
+INSTALL(FILES ${systemd_files} DESTINATION "lib/systemd/user")
