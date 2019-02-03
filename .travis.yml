@@ -12,6 +12,7 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-7
+        - ninja-build
     env:
     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
   - compiler: clang
@@ -22,6 +23,7 @@ matrix:
         - llvm-toolchain-trusty-6.0
         packages:
         - cmake
+        - ninja-build
         - clang-6.0
         - libc++-dev
         - libc++abi-dev
@@ -34,15 +36,11 @@ before_install:
 - sudo apt-get install -y libnotify-dev
 - sudo apt-get install -y libglib2.0-dev
 
-branches:
-  only:
-  - cpp
-
 script:
 - mkdir -p build
 - cd build
-- cmake -DCMAKE_BUILD_TYPE=Release ..
-- make
+- cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+- ninja all
 
 env:
   global:
