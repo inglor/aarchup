@@ -1,3 +1,5 @@
+# Project moved to gitlab https://gitlab.com/artafinde/aarchup
+
 # Aarchup
 
 [![Build Status](https://travis-ci.com/inglor/aarchup.svg?branch=cpp)](https://travis-ci.com/inglor/aarchup)
